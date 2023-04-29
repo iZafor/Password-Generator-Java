@@ -1,10 +1,18 @@
 package z.code.passwordmanager;
 
 import javafx.fxml.FXML;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Slider;
+import javafx.scene.control.TextField;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 public class PasswordMangerController {
     @FXML
@@ -25,8 +33,6 @@ public class PasswordMangerController {
     private Text symbolsTxt;
     @FXML
     private Text passwordText;
-
-    private final PasswordManager passwordManager;
     private final Clipboard clipboard;
 
     private int digitsCount;
@@ -39,7 +45,6 @@ public class PasswordMangerController {
         this.upperCaseCount = 2;
         this.lowerCaseCount = 2;
         this.symbolsCount = 2;
-        this.passwordManager = new PasswordManager();
         this.clipboard = Clipboard.getSystemClipboard();
     }
 
@@ -81,8 +86,15 @@ public class PasswordMangerController {
     @FXML
     public void onGenerate() {
         updateValues();
-        String password = passwordManager.generatePassword(digitsCount, upperCaseCount, lowerCaseCount, symbolsCount);
+        String password = PasswordUtility.generatePassword(digitsCount, upperCaseCount, lowerCaseCount, symbolsCount);
         passwordText.setText(password);
+    }
+
+    @FXML
+    public void onGenerateQrcode() {
+        if (!passwordText.getText().isEmpty()) {
+            showSaveDialog((Stage) digitsSlider.getScene().getWindow());
+        }
     }
 
     @FXML
@@ -99,5 +111,53 @@ public class PasswordMangerController {
         setSliderValues(true);
         updateValues();
         setTxtValues();
+    }
+
+    private void showSaveDialog(Stage primaryStage) {
+        final Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(primaryStage);
+
+        // dialog message
+        Text message = new Text("Enter File Name");
+        message.setLayoutX(135);
+        message.setLayoutY(48);
+        message.setFont(new Font(18));
+
+        // input field
+        TextField fileName = new TextField();
+        fileName.setFont(new Font(16));
+        fileName.setLayoutX(109);
+        fileName.setLayoutY(79);
+        fileName.setPrefWidth(183);
+        fileName.setPrefHeight(30);
+
+        // save button
+        Button saveBtn = new Button("Save");
+        saveBtn.setFont(new Font(18));
+        saveBtn.setLayoutX(172);
+        saveBtn.setLayoutY(150);
+        saveBtn.setOnAction(actionEvent -> {
+            if (!fileName.getText().isEmpty()) {
+                dialog.close();
+                generateQrCodeImg(fileName.getText());
+            }
+        });
+
+        AnchorPane parent = new AnchorPane(message, fileName, saveBtn);
+        Scene dialogScene = new Scene(parent, 400, 200);
+
+        dialog.initStyle(StageStyle.UNDECORATED);
+        dialog.setScene(dialogScene);
+        dialog.show();
+    }
+
+    private void generateQrCodeImg(String fileName) {
+        QrcodeManager.saveQrcodeImage(
+                QrcodeManager.generateQrcodeBitMatrix(
+                        passwordText.getText(),
+                        "UTF-8", 200, 200
+                ), "png", "src/main/images/" + fileName + ".png"
+        );
     }
 }

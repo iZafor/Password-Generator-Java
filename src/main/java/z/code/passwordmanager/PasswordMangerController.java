@@ -1,10 +1,13 @@
 package z.code.passwordmanager;
 
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.AnchorPane;
@@ -13,8 +16,13 @@ import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.util.Duration;
+import org.controlsfx.control.Notifications;
+
+import java.util.Objects;
 
 public class PasswordMangerController {
+    private final Clipboard clipboard;
     @FXML
     private Slider digitsSlider;
     @FXML
@@ -33,8 +41,6 @@ public class PasswordMangerController {
     private Text symbolsTxt;
     @FXML
     private Text passwordText;
-    private final Clipboard clipboard;
-
     private int digitsCount;
     private int upperCaseCount;
     private int lowerCaseCount;
@@ -86,7 +92,7 @@ public class PasswordMangerController {
     @FXML
     public void onGenerate() {
         updateValues();
-        String password = PasswordUtility.generatePassword(digitsCount, upperCaseCount, lowerCaseCount, symbolsCount);
+        String password = PasswordManger.generatePassword(digitsCount, upperCaseCount, lowerCaseCount, symbolsCount);
         passwordText.setText(password);
     }
 
@@ -103,6 +109,7 @@ public class PasswordMangerController {
             ClipboardContent content = new ClipboardContent();
             content.putString(passwordText.getText());
             clipboard.setContent(content);
+            showSuccessNotification("Copied to Clipboard");
         }
     }
 
@@ -111,10 +118,11 @@ public class PasswordMangerController {
         setSliderValues(true);
         updateValues();
         setTxtValues();
+        showSuccessNotification("Reset Values");
     }
 
     private void showSaveDialog(Stage primaryStage) {
-        final Stage dialog = new Stage();
+        Stage dialog = new Stage();
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.initOwner(primaryStage);
 
@@ -124,7 +132,7 @@ public class PasswordMangerController {
         message.setLayoutY(48);
         message.setFont(new Font(18));
 
-        // input field
+        // input field for file name
         TextField fileName = new TextField();
         fileName.setFont(new Font(16));
         fileName.setLayoutX(109);
@@ -140,7 +148,8 @@ public class PasswordMangerController {
         saveBtn.setOnAction(actionEvent -> {
             if (!fileName.getText().isEmpty()) {
                 dialog.close();
-                generateQrCodeImg(fileName.getText());
+                QrcodeManager.saveAsQrcodeImage(fileName.getText(), passwordText.getText());
+                showSuccessNotification("Save Qrcode");
             }
         });
 
@@ -152,12 +161,15 @@ public class PasswordMangerController {
         dialog.show();
     }
 
-    private void generateQrCodeImg(String fileName) {
-        QrcodeManager.saveQrcodeImage(
-                QrcodeManager.generateQrcodeBitMatrix(
-                        passwordText.getText(),
-                        "UTF-8", 200, 200
-                ), "png", "src/main/images/" + fileName + ".png"
-        );
+    private void showSuccessNotification(String title) {
+        Image img = new Image(Objects.requireNonNull(getClass().getResourceAsStream("assets/tick.png")));
+
+        Notifications.create()
+                .title(title)
+                .text("Successful")
+                .graphic(new ImageView(img))
+                .position(Pos.TOP_RIGHT)
+                .hideCloseButton()
+                .hideAfter(Duration.seconds(2)).show();
     }
 }

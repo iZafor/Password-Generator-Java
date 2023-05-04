@@ -2,14 +2,14 @@ package z.code.passwordmanager;
 
 import java.util.Random;
 
-public class PasswordUtility {
+public class PasswordManger {
     private static final String digitChars = "0123456789";
     private static final String lowerChars = "abcdefghijklmnopqrstuvwxyz";
     private static final String upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static final String symbolChars = "()!@#$%[]{}<>;:";
     private static final Random random = new Random();
 
-    private PasswordUtility() {
+    private PasswordManger() {
 
     }
 
